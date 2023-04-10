@@ -11,14 +11,6 @@ pik2 = require("Pikmin2_Common")
 --Starting RNG index of Julian's TAS
 local startRngIndex = 139521789
 
---Uses Malleo's RNG index functions
-function rngIndexDiff(oldSeed, newSeed)
-    if newSeed and oldSeed then
-        return rng.rnginverse(newSeed) - rng.rnginverse(oldSeed)
-    end
-    return nil
-end
-
 function onScriptStart()
     pik2.Initialize()
 end
@@ -29,23 +21,19 @@ end
 
 function onScriptUpdate()
     if OldFrame ~= GetFrameCount() then
-		-- Make sure no bad pointers are read
-        if pik2.MoviePlayerPtrPtr and pik2.MoviePlayerPtrPtr > 0x80000000 and 0x817ffff0 > pik2.MoviePlayerPtrPtr then 
-            MoviePlayerPtr = ReadValue32(pik2.MoviePlayerPtrPtr)
-            if MoviePlayerPtr > 0x80000000 and 0x817ffff0 > MoviePlayerPtr then DemoState = ReadValue32(MoviePlayerPtr + 0x18) end
-        end
 
         OldRNG = RNG
-        if pik2.RNGPtr and pik2.RNGPtr > 0x80000000 and 0x817ffff0 > pik2.RNGPtr then RNG = ReadValue32(pik2.RNGPtr) end
-        if RNG and OldRNG then FrameRNGCalls = rngIndexDiff(OldRNG, RNG) end
+        if pik2.isGoodPtr(pik2.RNGPtr) then RNG = ReadValue32(pik2.RNGPtr) end
+        if RNG and OldRNG then FrameRNGCalls = rng.rngIndexDiff(OldRNG, RNG) end
         if FrameRNGCalls then if FrameRNGCalls < 0 and FrameRNGCalls > -1000000 then BaseRNG = RNG end end
-        if BaseRNG then StateRNGCalls = rngIndexDiff(BaseRNG, RNG) end
+        if BaseRNG then StateRNGCalls = rng.rngIndexDiff(BaseRNG, RNG) end
 
 		local RngIndex = rng.rnginverse(RNG) - startRngIndex;
 
-        if pik2.NaviMgrPtr > 0x80000000 and 0x817ffff0 > pik2.NaviMgrPtr then
+        if pik2.isGoodPtr(pik2.NaviMgrPtr) then
             NaviMgr = ReadValue32(pik2.NaviMgrPtr)
-            pik2.NaviObjects(NaviMgr)
+            -- TODO return an object here instead of setting global variables.
+			pik2.NaviObjects(NaviMgr)
         end
 
         local text = ""
@@ -63,7 +51,8 @@ function onScriptUpdate()
         if BaseRNG then text = text .. string.format("\nCalls since state loaded: %d", StateRNGCalls) end
 		if RngIndex then text = text .. string.format("\nRNG index: %d", RngIndex) end
 
-        if DemoState then text = text .. string.format("\n\n===Cutscenes===\nButton lockout: %d", DemoState) end
+		local demoState = pik2.demoState()
+        if demoState then text = text .. string.format("\n\n===Cutscenes===\nButton lockout: %d", demoState) end
 
         text = text .. "\n\n===Positions and Velocities==="
         if OlimarPosX and OlimarVelX then text = text .. string.format("\nOlimar:\nX pos: %5f | X speed: %5f", OlimarPosX, OlimarVelX) end

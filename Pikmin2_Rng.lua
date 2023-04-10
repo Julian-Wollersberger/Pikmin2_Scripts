@@ -83,4 +83,13 @@ local function rnginverse(r) -- Given an RNG value r, compute the unique x in ra
 end
 rng.rnginverse = rnginverse
 
+-- Calculate how many RNG calls there are between two seeds.
+local function rngIndexDiff(oldSeed, newSeed)
+    if newSeed and oldSeed then
+        return rng.rnginverse(newSeed) - rng.rnginverse(oldSeed)
+    end
+    return nil
+end
+rng.rngIndexDiff = rngIndexDiff
+
 return rng

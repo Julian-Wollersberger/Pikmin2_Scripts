@@ -76,6 +76,12 @@ local function Velocity(oldPos, pos)
 end
 pik2.Velocity = Velocity
 
+-- Make sure no bad pointers are read
+local function isGoodPtr(ptr)
+	return ptr ~= nil and ptr > 0x80000000 and 0x817ffff0 > ptr
+end
+pik2.isGoodPtr = isGoodPtr
+
 --Gives various values in Navi objects
 local function NaviObjects(navimgr)
     if navimgr > 0x80000000 and 0x817ffff0 > navimgr then
@@ -113,5 +119,17 @@ local function NaviObjects(navimgr)
     end
 end
 pik2.NaviObjects = NaviObjects
+
+-- Get the DemoState, which is non-zero during button lockout and cutscenes.
+local function demoState()
+	if isGoodPtr(pik2.MoviePlayerPtrPtr) then 
+		local MoviePlayerPtr = ReadValue32(pik2.MoviePlayerPtrPtr)
+		if isGoodPtr(MoviePlayerPtr) then 
+			return ReadValue32(MoviePlayerPtr + 0x18) 
+		end
+	end
+	return nil
+end
+pik2.demoState = demoState
 
 return pik2

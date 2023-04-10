@@ -19,6 +19,22 @@ pik2 = require("Pikmin2_Common")
 package.path = GetScriptsDir() .. "Pikmin2_Rng.lua"
 rng = require("Pikmin2_Rng")
 
+---- Manip Parameters ----
+-- Values specific to the sublevel you are TASing.
+
+-- When to call Cavegen and reload the savestate. Should be a frame of the delve deeper cutscene
+-- and before the black transition to the save prompt, where the RNG seed doesn't change anymore.
+local playToFrame = 57650
+-- Between the delve-deeper-cutscene and actual layout generation, RNG is called several times:
+-- * Once for each Pikmin on the black transition after the delve-deeper-cutscene
+-- * Once for each letter of the cave name (including whitespace) after the saveprompt 
+-- * ??? then another 2 calls?
+-- Then layout generation happens.
+-- Eg: 85 Pikmin in "Snagret Hole"
+local rngCallsBeforeCavegen = 85 + 12 
+-- Short level name used by cavegen.
+local sublevelName = "SH-6"
+
 ---- Config ----
 -- Absolute path to the cavegen folder, with a trailing slash.
 cavegen_path = "D:/Dokumente/Pikmin 2 TAS 2/CaveGen/"
@@ -38,7 +54,7 @@ function onScriptStart()
 end
 
 function onScriptCancel()
-	--SetScreenText("")
+	SetScreenText("")
 end
 
 function generate_image(sublevel, seed)
@@ -89,16 +105,54 @@ function get_working_dir()
 end
 
 
+
+
+local oldFrame = 0
+local rngSeed = 0
+local rngIndex = 0
+local oldRngSeed = 0
+local oldRngIndex = 0
+local reachedFrame = false
+local cavegenSeed = 0
+
 function onScriptUpdate()
-	local rngSeed = pik2.readRngSeed()
-	local rngIndex = rng.rnginverse(rngSeed) - startRngIndex
+	-- The script is updated multiple times per frame. Don't care about that.
+	local frame = GetFrameCount()
+	if oldFrame == frame then 
+		return nil 
+	else
+		oldFrame = frame
+	end
+
+	-- Mash A button
+	-- Doesn't really work that well for whatever reason.
+	--if GetFrameCount() % 2 == 0 then
+	--	PressButton("A")
+	--end
+
+	oldRngSeed = rngSeed
+	oldRngIndex = rngIndex
+	rngSeed = pik2.readRngSeed()
+	rngIndex = rng.rnginverse(rngSeed) - startRngIndex
+	
+	-- Hopefully there won't be a lag frame exactly here.
+	if frame == playToFrame then
+		reachedFrame = true
+		cavegenSeed = rng.advanceRngBy(rngSeed, rngCallsBeforeCavegen)
+		generate_image(sublevelName, cavegenSeed)
+	end
 	
 	-- Make a simple text overlay for debugging.
 	local msg = "\n--- Cave Layout Manip ---\n"
-	msg = msg .. string.format("Current RNG seed:  0x%x\n", rngSeed)
-	msg = msg .. string.format("Current RNG index: %d\n", rngIndex)
+	msg = msg .. string.format("Last cavegen seed:  0x%x\n", cavegenSeed)
+	msg = msg .. string.format("Current RNG seed:   0x%x\n", rngSeed)
+	msg = msg .. string.format("Current RNG index:  %d\n", rngIndex)
+	msg = msg .. string.format("Previous RNG index: %d\n", oldRngIndex)
+	msg = msg .. string.format("RNG index diff    : %d\n", rngIndex - oldRngIndex)
 	msg = msg .. "\n"
 	msg = msg .. string.format("Cutscene/Lockout state: %d\n", pik2.demoState())
+	msg = msg .. "\n\nTesting:\n"
+	msg = msg .. string.format("Reached frame %d: %s\n", playToFrame, reachedFrame)
 	
 	SetScreenText(msg)
 end

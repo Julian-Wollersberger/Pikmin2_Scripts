@@ -83,6 +83,9 @@ local function rnginverse(r) -- Given an RNG value r, compute the unique x in ra
 end
 rng.rnginverse = rnginverse
 
+
+---- Pikmin 2 specific
+
 -- Calculate how many RNG calls there are between two seeds.
 local function rngIndexDiff(oldSeed, newSeed)
     if newSeed and oldSeed then
@@ -91,5 +94,24 @@ local function rngIndexDiff(oldSeed, newSeed)
     return nil
 end
 rng.rngIndexDiff = rngIndexDiff
+
+-- Port of Pikmin 2's dolphin::rand() function:
+-- `next = next * 0x41c64e6d + 0x3039;`
+-- `return (s16)((u16)((u32)next >> 0x10) & 0x7fff)`
+function rand(seed)
+    local nextSeed = (0x41c64e6d * seed + 0x3039) % 0x100000000
+	local value = (nextSeed >> 0x10) & 0x7fff
+	return nextSeed, value
+end
+rng.rand = rand
+
+-- Call rand() n times.
+function advanceRngBy(seed, n)
+	for i=1,n do
+		seed = rand(seed)
+	end
+	return seed
+end
+rng.advanceRngBy = advanceRngBy
 
 return rng

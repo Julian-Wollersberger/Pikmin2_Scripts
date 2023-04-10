@@ -1,11 +1,11 @@
-local pikminTwoRNG = {}
+local rng = {}
 
 ---- Malleo's RNG Code ----
 -- Massive thanks to Malleo for helping me out with this.
-m = 0x41c64e6d
-b = 0x3039
-q = 0x100000000
-powers = {
+local m = 0x41c64e6d
+local b = 0x3039
+local q = 0x100000000
+local powers = {
     1,
     2,
     4,
@@ -40,7 +40,7 @@ powers = {
     2147483648
 }
 
-function powmod(m, n, q) -- b^n mod q, computed by repeated squaring
+local function powmod(m, n, q) -- b^n mod q, computed by repeated squaring
 	if n == 0 then
 		return 1
 	else
@@ -53,7 +53,7 @@ function powmod(m, n, q) -- b^n mod q, computed by repeated squaring
 	end
 end
 
-function v2(a) -- The 2-adic valuation of a (that is, the largest integer v such that 2^v divides a)
+local function v2(a) -- The 2-adic valuation of a (that is, the largest integer v such that 2^v divides a)
     if a == 0 then
         return 1000000
 	end
@@ -66,11 +66,11 @@ function v2(a) -- The 2-adic valuation of a (that is, the largest integer v such
     return v
 end
 
-function inv(w) -- modular inverse of w modulo q (assuming w is odd)
+local function inv(w) -- modular inverse of w modulo q (assuming w is odd)
     return powmod(w, math.floor(q/2) - 1, q)
 end
 
-function rnginverse(r) -- Given an RNG value r, compute the unique x in range [0, 2^32) such that rng(x) = r.
+local function rnginverse(r) -- Given an RNG value r, compute the unique x in range [0, 2^32) such that rng(x) = r.
     local xpow = (r * 4 * math.floor((m-1)/4) * inv(b) + 1) % (4*q) -- Recover m^x mod 4q from algebra (inverting steps in rng function above)
     local xguess = 0
     for i,p in ipairs(powers) do -- Guess binary digits of x one by one
@@ -81,5 +81,6 @@ function rnginverse(r) -- Given an RNG value r, compute the unique x in range [0
 	end
     return xguess
 end
+rng.rnginverse = rnginverse
 
-return pikminTwoRNG
+return rng

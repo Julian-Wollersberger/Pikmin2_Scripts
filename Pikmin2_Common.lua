@@ -1,15 +1,16 @@
 -- Library with functions useful for Pikmin 2 scripts.
 --
--- Written by APerson13.
+-- Written by APerson13, adapted by Julian-Beides.
 
-local Pikmin2_Common = {}
+-- To have proper namespacing, only this object is made accessible to the outside.
+local pik2 = {}
 
-IsDemo = false
-MoviePlayerPtrPtr = 0x80516114
-RNGPtr = 0x805147e0
-NaviMgrPtr = 0x805158a0
+pik2.IsDemo = false
+pik2.MoviePlayerPtrPtr = 0x80516114
+pik2.RNGPtr = 0x805147e0
+pik2.NaviMgrPtr = 0x805158a0
 
-NaviStateIDs = {
+pik2.NaviStateIDs = {
     [0]="walk",
     [1]="follow",
     [2]="punch", --not sure
@@ -40,39 +41,43 @@ NaviStateIDs = {
 }
 
 --Run this to get essential offsets and info about the current game version.
-function Initialize()
+local function Initialize()
     GameID = GetGameID()
 	if (GameID ~= "GPVE01") and (GameID ~= "PIKE51") and (GameID ~= "GPVJ01") then
 		SetScreenText("")
 		CancelScript()
     --This just tests a random instruction offset in US Demo 1 that doesn't have any nearby similar instructions in US Final.
     elseif (GameID == "GPVE01" or GameID == "PIKE51") and ReadValue32(0x80471828) == 0x9421fb70 then
-        IsDemo = true
+        pik2.IsDemo = true
     elseif GameID == "GPVE01" then
-        MoviePlayerPtrPtr = MoviePlayerPtrPtr + 0xc0
-        RNGPtr = RNGPtr + 0xc8
-        NaviMgrPtr = NaviMgrPtr + 0xc0
+        pik2.MoviePlayerPtrPtr = pik2.MoviePlayerPtrPtr + 0xc0
+        pik2.RNGPtr = pik2.RNGPtr + 0xc8
+        pik2.NaviMgrPtr = pik2.NaviMgrPtr + 0xc0
     elseif GameID == "GPVJ01" then
-        MoviePlayerPtrPtr = MoviePlayerPtrPtr + 0x1bc0
-        RNGPtr = RNGPtr + 0x1bc8
-        NaviMgrPtr = NaviMgrPtr + 0x1bc0
+        pik2.MoviePlayerPtrPtr = pik2.MoviePlayerPtrPtr + 0x1bc0
+        pik2.RNGPtr = pik2.RNGPtr + 0x1bc8
+        pik2.NaviMgrPtr = pik2.NaviMgrPtr + 0x1bc0
     end
 end
+pik2.Initialize = Initialize
 
 --Function by LuigiM
-function FloatHack(intVal)
+local function FloatHack(intVal)
     return string.unpack("f", string.pack("I4", intVal))
 end
+pik2.FloatHack = FloatHack
 
-function Velocity(oldPos, pos) --This assumes 30FPS. Currently only used for Y velocity since actual captain vertical movement is calculated differently ingame.
+-- This assumes 30FPS. Currently only used for Y velocity since actual captain vertical movement is calculated differently ingame.
+local function Velocity(oldPos, pos) 
     if oldPos and pos then
         return (pos - oldPos) * 30
     end
     return 0
 end
+pik2.Velocity = Velocity
 
 --Gives various values in Navi objects
-function NaviObjects(navimgr)
+local function NaviObjects(navimgr)
     if navimgr > 0x80000000 and 0x817ffff0 > navimgr then
         NaviOne = ReadValue32(navimgr + 0x28)
         NaviTwo = NaviOne + 0x320
@@ -107,5 +112,6 @@ function NaviObjects(navimgr)
         end
     end
 end
+pik2.NaviObjects = NaviObjects
 
-return Pikmin2_Common
+return pik2

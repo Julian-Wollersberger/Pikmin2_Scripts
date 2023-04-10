@@ -1,27 +1,26 @@
----@diagnostic disable: lowercase-global
----@diagnostic disable: undefined-global
+-- Text overlay for Pikmin 2 TASing.
+-- Add an underscore (_)to the beginning of the filename if you want the script to auto launch once you start a game.
+--
+-- Initially written by APerson13, adapted by Julian-Beides.
+
+package.path = GetScriptsDir() .. "Pikmin2_Rng.lua"
+rng = require("Pikmin2_Rng")
+package.path = GetScriptsDir() .. "Pikmin2_Common.lua"
+pik2 = require("Pikmin2_Common")
 
 --Starting RNG index of Julian's TAS
-startRngIndex = 139521789
-
-package.path = GetScriptsDir() .. "pikminTwoRNG.lua"
-pTwoRng = require("pikminTwoRNG")
-package.path = GetScriptsDir() .. "Pikmin2_Common.lua"
-pTwoCmn = require("Pikmin2_Common")
+local startRngIndex = 139521789
 
 --Uses Malleo's RNG index functions
-function RngCalls(oldSeed, newSeed)
+function rngIndexDiff(oldSeed, newSeed)
     if newSeed and oldSeed then
-        return rnginverse(newSeed) - rnginverse(oldSeed)
+        return rng.rnginverse(newSeed) - rng.rnginverse(oldSeed)
     end
     return nil
 end
 
---Add an underscore (_) to the beginning of the filename if you want the script to auto launch once you start a game!
-
 function onScriptStart()
-    -- CancelScript()
-    Initialize()
+    pik2.Initialize()
 end
 
 function onScriptCancel()
@@ -30,22 +29,23 @@ end
 
 function onScriptUpdate()
     if OldFrame ~= GetFrameCount() then
-        if MoviePlayerPtrPtr and MoviePlayerPtrPtr > 0x80000000 and 0x817ffff0 > MoviePlayerPtrPtr then --Make sure no bad pointers are read
-            MoviePlayerPtr = ReadValue32(MoviePlayerPtrPtr)
+		-- Make sure no bad pointers are read
+        if pik2.MoviePlayerPtrPtr and pik2.MoviePlayerPtrPtr > 0x80000000 and 0x817ffff0 > pik2.MoviePlayerPtrPtr then 
+            MoviePlayerPtr = ReadValue32(pik2.MoviePlayerPtrPtr)
             if MoviePlayerPtr > 0x80000000 and 0x817ffff0 > MoviePlayerPtr then DemoState = ReadValue32(MoviePlayerPtr + 0x18) end
         end
 
         OldRNG = RNG
-        if RNGPtr and RNGPtr > 0x80000000 and 0x817ffff0 > RNGPtr then RNG = ReadValue32(RNGPtr) end
-        if RNG and OldRNG then FrameRNGCalls = RngCalls(OldRNG, RNG) end
+        if pik2.RNGPtr and pik2.RNGPtr > 0x80000000 and 0x817ffff0 > pik2.RNGPtr then RNG = ReadValue32(pik2.RNGPtr) end
+        if RNG and OldRNG then FrameRNGCalls = rngIndexDiff(OldRNG, RNG) end
         if FrameRNGCalls then if FrameRNGCalls < 0 and FrameRNGCalls > -1000000 then BaseRNG = RNG end end
-        if BaseRNG then StateRNGCalls = RngCalls(BaseRNG, RNG) end
+        if BaseRNG then StateRNGCalls = rngIndexDiff(BaseRNG, RNG) end
 
-		local RngIndex = rnginverse(RNG) - startRngIndex;
+		local RngIndex = rng.rnginverse(RNG) - startRngIndex;
 
-        if NaviMgrPtr > 0x80000000 and 0x817ffff0 > NaviMgrPtr then
-            NaviMgr = ReadValue32(NaviMgrPtr)
-            NaviObjects(NaviMgr)
+        if pik2.NaviMgrPtr > 0x80000000 and 0x817ffff0 > pik2.NaviMgrPtr then
+            NaviMgr = ReadValue32(pik2.NaviMgrPtr)
+            pik2.NaviObjects(NaviMgr)
         end
 
         local text = ""
@@ -71,13 +71,13 @@ function onScriptUpdate()
         if OlimarPosZ and OlimarVelZ then text = text .. string.format("\nZ pos: %5f | Z speed: %5f", OlimarPosZ, OlimarVelZ) end
         if OlimarVelXZ then text = text .. string.format("\nXZ speed: %5f", OlimarVelXZ) end
         if OlimarColl then text = text .. string.format("\nCollision version: %d", OlimarColl) end
-        if OlimarStateID and NaviStateIDs[OlimarStateID] then text = text .. "\nState: " .. NaviStateIDs[OlimarStateID] end
+        if OlimarStateID and pik2.NaviStateIDs[OlimarStateID] then text = text .. "\nState: " .. pik2.NaviStateIDs[OlimarStateID] end
         if LouiePosX and LouieVelX then text = text .. string.format("\nLouie:\nX pos: %5f | X speed: %5f", LouiePosX, LouieVelX) end
         if LouiePosY and LouieVelY then text = text .. string.format("\nY pos: %5f | Y speed: %5f", LouiePosY, LouieVelY) end
         if LouiePosZ and LouieVelZ then text = text .. string.format("\nZ pos: %5f | Z speed: %5f", LouiePosZ, LouieVelZ) end
         if LouieVelXZ then text = text .. string.format("\nXZ speed: %5f", LouieVelXZ) end
         if LouieColl then text = text .. string.format("\nCollision version: %d", LouieColl) end
-        if LouieStateID and NaviStateIDs[LouieStateID] then text = text .. "\nState: " .. NaviStateIDs[LouieStateID] end
+        if LouieStateID and pik2.NaviStateIDs[LouieStateID] then text = text .. "\nState: " .. pik2.NaviStateIDs[LouieStateID] end
 
         ----TESTS----
         --if TestValue then text = text .. string.format("\n\nOlimar triangle pointer: %x", TestValue) end
@@ -88,9 +88,7 @@ function onScriptUpdate()
 end
 
 function onStateLoaded()
-
 end
 
 function onStateSaved()
-
 end

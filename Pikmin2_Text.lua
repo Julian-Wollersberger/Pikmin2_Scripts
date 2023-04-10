@@ -12,7 +12,7 @@ pik2 = require("Pikmin2_Common")
 local startRngIndex = 139521789
 
 function onScriptStart()
-    pik2.Initialize()
+    pik2.initialize()
 end
 
 function onScriptCancel()
@@ -23,18 +23,12 @@ function onScriptUpdate()
     if OldFrame ~= GetFrameCount() then
 
         OldRNG = RNG
-        if pik2.isGoodPtr(pik2.RNGPtr) then RNG = ReadValue32(pik2.RNGPtr) end
+        RNG = pik2.readRngSeed()
         if RNG and OldRNG then FrameRNGCalls = rng.rngIndexDiff(OldRNG, RNG) end
         if FrameRNGCalls then if FrameRNGCalls < 0 and FrameRNGCalls > -1000000 then BaseRNG = RNG end end
         if BaseRNG then StateRNGCalls = rng.rngIndexDiff(BaseRNG, RNG) end
 
 		local RngIndex = rng.rnginverse(RNG) - startRngIndex;
-
-        if pik2.isGoodPtr(pik2.NaviMgrPtr) then
-            NaviMgr = ReadValue32(pik2.NaviMgrPtr)
-            -- TODO return an object here instead of setting global variables.
-			pik2.NaviObjects(NaviMgr)
-        end
 
         local text = ""
         --if IsDemo then
@@ -54,6 +48,7 @@ function onScriptUpdate()
 		local demoState = pik2.demoState()
         if demoState then text = text .. string.format("\n\n===Cutscenes===\nButton lockout: %d", demoState) end
 
+		pik2.naviObjects(NaviMgr)
         text = text .. "\n\n===Positions and Velocities==="
         if OlimarPosX and OlimarVelX then text = text .. string.format("\nOlimar:\nX pos: %5f | X speed: %5f", OlimarPosX, OlimarVelX) end
         if OlimarPosY and OlimarVelY then text = text .. string.format("\nY pos: %5f | Y speed: %5f", OlimarPosY, OlimarVelY) end
@@ -67,9 +62,6 @@ function onScriptUpdate()
         if LouieVelXZ then text = text .. string.format("\nXZ speed: %5f", LouieVelXZ) end
         if LouieColl then text = text .. string.format("\nCollision version: %d", LouieColl) end
         if LouieStateID and pik2.NaviStateIDs[LouieStateID] then text = text .. "\nState: " .. pik2.NaviStateIDs[LouieStateID] end
-
-        ----TESTS----
-        --if TestValue then text = text .. string.format("\n\nOlimar triangle pointer: %x", TestValue) end
 
 	    SetScreenText(text)
     end

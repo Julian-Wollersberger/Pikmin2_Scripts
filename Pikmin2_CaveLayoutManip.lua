@@ -13,18 +13,32 @@
 --
 -- TODO: Use caveripper. But that's fiddly at the moment.
 
+---- Imports ----
+package.path = GetScriptsDir() .. "Pikmin2_Common.lua"
+pik2 = require("Pikmin2_Common")
+package.path = GetScriptsDir() .. "Pikmin2_Rng.lua"
+rng = require("Pikmin2_Rng")
 
--- Path to the cavegen folder, with a trailing slash.
+---- Config ----
+-- Absolute path to the cavegen folder, with a trailing slash.
 cavegen_path = "D:/Dokumente/Pikmin 2 TAS 2/CaveGen/"
+--Starting RNG index of Julian's TAS
+local startRngIndex = 139521789
+
 
 function onScriptStart()
-	local msg = generate_image("SH-6", 64)
-	msg = msg .. get_working_dir()
-	SetScreenText(msg)
+	pik2.initialize()
+	
+	--local msg = generate_image("SH-6", 64)
+	--msg = msg .. get_working_dir()
+	--SetScreenText(msg)
+	
+	-- For one-off scripts.
+	--CancelScript()
 end
 
 function onScriptCancel()
-	SetScreenText("")
+	--SetScreenText("")
 end
 
 function generate_image(sublevel, seed)
@@ -76,6 +90,17 @@ end
 
 
 function onScriptUpdate()
+	local rngSeed = pik2.readRngSeed()
+	local rngIndex = rng.rnginverse(rngSeed) - startRngIndex
+	
+	-- Make a simple text overlay for debugging.
+	local msg = "\n--- Cave Layout Manip ---\n"
+	msg = msg .. string.format("Current RNG seed:  0x%x\n", rngSeed)
+	msg = msg .. string.format("Current RNG index: %d\n", rngIndex)
+	msg = msg .. "\n"
+	msg = msg .. string.format("Cutscene/Lockout state: %d\n", pik2.demoState())
+	
+	SetScreenText(msg)
 end
 
 function onStateLoaded()
@@ -84,18 +109,3 @@ end
 function onStateSaved()
 end
 
-
--- Wooops, there is a built-in tostring() function.
-function format(value)
-	if value == nil then
-		return "nil"
-	elseif type(value) == "boolean" then
-		return string.format("%s", value)
-	elseif type(value) == "number" then
-		return string.format("%d", value)
-	elseif type(value) == "string" then
-		return value
-	else
-		return "[" .. type(value) "]"
-	end
-end

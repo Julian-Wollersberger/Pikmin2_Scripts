@@ -24,7 +24,7 @@ rng = require("Pikmin2_Rng")
 
 -- When to call Cavegen and reload the savestate. Should be a frame of the delve deeper cutscene
 -- and before the black transition to the save prompt, where the RNG seed doesn't change anymore.
-local playToFrame = 57650
+local playToFrame = 57625
 -- Between the delve-deeper-cutscene and actual layout generation, RNG is called several times:
 -- * Once for each Pikmin on the black transition after the delve-deeper-cutscene
 -- * Once for each letter of the cave name (including whitespace) after the saveprompt 
@@ -60,7 +60,7 @@ end
 function generate_image(sublevel, seed)
 	local seed_text = string.format("0x%x", seed)
 	-- First set working dir, then execute cavegen.
-	local command = "cd /d \"" .. cavegen_path .. "\" & java -jar \"" .. cavegen_path .. "CaveGen.jar\" cave " .. sublevel .. " -seed " .. seed_text .. " & pause"
+	local command = "cd /d \"" .. cavegen_path .. "\" & java -jar \"" .. cavegen_path .. "CaveGen.jar\" cave " .. sublevel .. " -seed " .. seed_text --.. " & pause"
 	
 	-- Problem: cd doesn't work. And cavegen needs its local paths.
 	
@@ -148,7 +148,8 @@ function onScriptUpdate()
 	msg = msg .. string.format("Current RNG seed:   0x%x\n", rngSeed)
 	msg = msg .. string.format("Current RNG index:  %d\n", rngIndex)
 	msg = msg .. string.format("Previous RNG index: %d\n", oldRngIndex)
-	msg = msg .. string.format("RNG index diff    : %d\n", rngIndex - oldRngIndex)
+	msg = msg .. string.format("RNG index diff:     %d\n", rngIndex - oldRngIndex)
+	msg = msg .. string.format("Index + %d =        %d\n", rngCallsBeforeCavegen, rngIndex + rngCallsBeforeCavegen)
 	msg = msg .. "\n"
 	msg = msg .. string.format("Cutscene/Lockout state: %d\n", pik2.demoState())
 	msg = msg .. "\n\nTesting:\n"
